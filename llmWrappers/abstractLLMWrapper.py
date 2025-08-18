@@ -28,7 +28,7 @@ class AbstractLLMWrapper:
         self.SYSTEM_PROMPT = None
         self.LLM_ENDPOINT = None
         self.CONTEXT_SIZE = None
-        self.tokenizer = None
+    # self.tokenizer = None  # No tokenizer needed for Ollama/OpenAI API
 
     # Basic filter to check if a message contains a word in the blacklist
     def is_filtered(self, text):
@@ -79,24 +79,18 @@ class AbstractLLMWrapper:
 
             base_injections = [Injection(self.SYSTEM_PROMPT, 10), Injection(chat_section, 100)]
             full_prompt = self.assemble_injections(base_injections) + generation_prompt
-            wrapper = [{"role": "user", "content": full_prompt}]
 
-            # Find out roughly how many tokens the prompt is
-            # Not 100% accurate, but it should be a good enough estimate
-            prompt_tokens = len(self.tokenizer.apply_chat_template(wrapper, tokenize=True, return_tensors="pt")[0])
-            # print(prompt_tokens)
+            # For Ollama/OpenAI API, we don't need exact token counting. Use character count as a rough proxy.
+            prompt_chars = len(full_prompt)
+            # Assume 4 chars per token as a rough estimate
+            prompt_tokens = prompt_chars // 4
 
-            # Maximum 90% context size usage before prompting LLM
             if prompt_tokens < 0.9 * self.CONTEXT_SIZE:
                 self.signals.sio_queue.put(("full_prompt", full_prompt))
-                # print(full_prompt)
                 return full_prompt
             else:
-                # If the prompt is too long even with no messages, there's nothing we can do, crash
                 if len(messages) < 1:
                     raise RuntimeError("Prompt too long even with no messages")
-
-                # Remove the oldest message from the prompt and try again
                 messages.pop(0)
                 print("Prompt too long, removing earliest message")
 

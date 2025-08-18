@@ -145,6 +145,7 @@ class VtubeStudio(Module):
         # Connect
         try:
             await self.vts.connect()
+            print("Connected to Vtube Studio")
         except:
             print("Failed to connect to Vtube Studio. Disabling Vtube Studio module.")
             self.enabled = False

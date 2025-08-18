@@ -14,7 +14,7 @@ PATIENCE = 60
 
 # URL of LLM API Endpoint
 # LLM_ENDPOINT = ""
-LLM_ENDPOINT = "http://127.0.0.1:5000"
+LLM_ENDPOINT = "http://localhost:11434/v1"
 
 # Twitch chat messages above this length will be ignored
 TWITCH_MAX_MESSAGE_LENGTH = 300
@@ -48,7 +48,7 @@ PRIMARY_MONITOR = 0
 
 # The model you are using, to calculate how many tokens the current message is
 # Ensure this is correct! Used for token count estimation
-MODEL = "meta-llama/Meta-Llama-3-8B"
+MODEL = "llama3:8b"
 
 # Context size (maximum number of tokens in the prompt) Will target upto 90% usage of this limit
 CONTEXT_SIZE = 8192
