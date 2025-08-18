@@ -1,48 +1,31 @@
+
 import time
 from constants import *
 import torch
 import numpy as np
 import sounddevice as sd
-import librosa
 import threading
+from TTS.api import TTS as CoquiTTS
 
-# Example: Using VITS from TTS library (ensure you have a VITS model checkpoint)
-from TTS.utils.manage import ModelManager
-from TTS.utils.synthesizer import Synthesizer
 
 class TTS:
     def __init__(self, signals):
         self.signals = signals
         self.API = self.API(self)
         self.enabled = True
-        self.synth = None
-        self.sr = 22050  # Default sample rate for VITS
         self.output_device = OUTPUT_DEVICE_INDEX
-        self._init_vits()
+        # Load a local Coqui TTS model (change model_name as needed)
+        self.model_name = "tts_models/en/ljspeech/vits"  # Or another local model
+        self.tts = CoquiTTS(self.model_name)
+        self.sr = self.tts.synthesizer.tts_config.audio["sample_rate"]
         self.signals.tts_ready = True
 
-    def _init_vits(self):
-        model_name = "tts_models/en/ljspeech/vits"
-        manager = ModelManager()
-        model_path, config_path, model_item = manager.download_model(model_name)
-        # VITS models do not require a separate vocoder
-        self.synth = Synthesizer(
-            tts_checkpoint=model_path,
-            tts_config_path=config_path,
-            use_cuda=torch.cuda.is_available()
-        )
-        self.sr = self.synth.tts_config.audio['sample_rate']
-
     def play(self, message):
-        if not self.enabled:
-            return
-        if not message.strip():
+        if not self.enabled or not message.strip():
             return
         self.signals.sio_queue.put(("current_message", message))
         # Synthesize audio (returns numpy array)
-        wav = self.synth.tts(message, speaker_name=None)
-        # Normalize audio
-        wav = librosa.util.normalize(wav)
+        wav = self.tts.tts(text=message, speaker=None)
         # Play audio in a separate thread to avoid blocking
         threading.Thread(target=self._play_audio, args=(wav,), daemon=True).start()
 
