@@ -1,8 +1,8 @@
 {
   "memories": [
     {
-      "id": "favoritefood",
-      "document": "Luna's favorite food is mango smoothies.",
+      "id": "quirk",
+      "document": "Lora tends to hum when He’s thinking really hard.",
       "metadata": {
         "type": "long-term"
       }

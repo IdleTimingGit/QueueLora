@@ -1,4 +1,3 @@
-
 import os
 import requests
 from constants import *
@@ -14,15 +13,17 @@ class TextLLMWrapper(AbstractLLMWrapper):
         self.CONTEXT_SIZE = CONTEXT_SIZE
         # No tokenizer needed for Ollama API
 
+
     def prepare_payload(self):
-        # Ollama OpenAI-compatible API expects a 'messages' list
+        # Only include the system prompt if this is the first message in the conversation
+        chat_prompt = self.generate_prompt()
+        if len(self.signals.history) <= 2:  # 2 = system + first user message
+            prompt = self.SYSTEM_PROMPT + "\n" + chat_prompt
+        else:
+            prompt = chat_prompt
         return {
-            "model": MODEL,  # e.g., "llama3:8b"
-            "messages": [
-                {"role": "system", "content": self.SYSTEM_PROMPT},
-                {"role": "user", "content": self.generate_prompt()}
-            ],
-            "stream": False,  # Set to True if you want streaming
+            "model": MODEL,
+            "prompt": prompt,
             "max_tokens": 200,
             "stop": STOP_STRINGS,
         }
@@ -30,8 +31,11 @@ class TextLLMWrapper(AbstractLLMWrapper):
     def generate_response(self):
         payload = self.prepare_payload()
         headers = {"Content-Type": "application/json"}
-        response = requests.post(f"{self.LLM_ENDPOINT}/chat/completions", json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        # Ollama returns choices[0]['message']['content']
-        return data["choices"][0]["message"]["content"]
+        try:
+            response = requests.post(f"{self.LLM_ENDPOINT}/completions", json=payload, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["text"]
+        except Exception as e:
+            print("[ERROR] LLM call failed:", e)
+            return ""

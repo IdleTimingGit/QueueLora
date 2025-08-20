@@ -105,28 +105,8 @@ class AbstractLLMWrapper:
         self.signals.new_message = False
         self.signals.sio_queue.put(("reset_next_message", None))
 
-        data = self.prepare_payload()
-
-        stream_response = requests.post(self.LLM_ENDPOINT + "/v1/chat/completions", headers=self.headers, json=data,
-                                        verify=False, stream=True)
-        response_stream = sseclient.SSEClient(stream_response)
-
-        AI_message = ''
-        for event in response_stream.events():
-            # Check to see if next message was canceled
-            if self.llmState.next_cancelled:
-                continue
-
-            payload = json.loads(event.data)
-            chunk = payload['choices'][0]['delta']['content']
-            AI_message += chunk
-            self.signals.sio_queue.put(("next_chunk", chunk))
-
-        if self.llmState.next_cancelled:
-            self.llmState.next_cancelled = False
-            self.signals.sio_queue.put(("reset_next_message", None))
-            self.signals.AI_thinking = False
-            return
+        # Use the non-streaming generate_response method
+        AI_message = self.generate_response()
 
         print("AI OUTPUT: " + AI_message)
         self.signals.last_message_time = time.time()
