@@ -225,7 +225,6 @@ class SocketIOServer:
 
                 while not self.signals.sio_queue.empty():
                     event, data = self.signals.sio_queue.get()
-                    # print(f"Sending {event} with {data}")
                     await sio.emit(event, data)
                 await sio.sleep(0.1)
 

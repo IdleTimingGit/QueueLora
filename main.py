@@ -60,7 +60,8 @@ async def main():
     # Create Discord bot
     # modules['discord'] = DiscordClient(signals, stt, enabled=False)
     # Create Twitch bot
-    #modules['twitch'] = TwitchClient(signals, enabled=False) # Disabled for now
+    modules['twitch'] = TwitchClient(signals, enabled=True)
+    twitch_task = asyncio.create_task(modules['twitch'].run())
     # Create audio player
     modules['audio_player'] = AudioPlayer(signals, enabled=True)
     # Create Vtube Studio plugin
